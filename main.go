@@ -2,19 +2,38 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"os"
+	"strconv"
+
+	"github.com/joho/godotenv"
 )
 
-func rootHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Home Page")
-}
-
-func startServer() {
-
-	http.HandleFunc("/", rootHandler)
-	http.ListenAndServe(":8000", nil)
-}
-
 func main() {
-	fmt.Println("Starting web server")
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Failed loading .env", err)
+		return
+	} else {
+		log.Println(".ENV Loaded:", os.Getenv("ENVLOADED"))
+	}
+	var port, err = strconv.ParseInt(os.Getenv("PORT"), 10, 0)
+	if err != nil {
+		log.Fatal("No port set in .env", err)
+		return
+	}
+	log.Println("Starting server...")
+	initDB()
+	defer db.Close()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /api/scores", submitScore)
+	mux.HandleFunc("GET /api/scores", getScores)
+	mux.HandleFunc("GET /api/leaderboard/{gameID}", leaderboardHandler)
+	mux.HandleFunc("POST /api/games", addGame)
+
+	addr := fmt.Sprintf(":%d", port)
+	log.Printf("Server starting on %s", addr)
+	log.Fatal(http.ListenAndServe(addr, mux))
+
 }
