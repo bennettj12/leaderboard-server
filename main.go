@@ -27,11 +27,11 @@ func main() {
 	defer db.Close()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /api/scores", submitScore)
-	mux.HandleFunc("GET /api/scores", getScores)
+	mux.HandleFunc("POST /api/scores/{gameID}", submitScore)
+	mux.HandleFunc("GET /api/scores/{gameID}", getScores)
 	mux.HandleFunc("GET /api/leaderboard/{gameID}", leaderboardHandler)
 	mux.HandleFunc("POST /api/games", addGame)
-
+	mux.HandleFunc("GET /api/games", getGames)
 	addr := fmt.Sprintf(":%d", port)
 	log.Printf("Server starting on %s", addr)
 	log.Fatal(http.ListenAndServe(addr, mux))

@@ -27,7 +27,7 @@ func createTables() {
 	gamesTable := `
     CREATE TABLE IF NOT EXISTS games (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
+        name TEXT NOT NULL UNIQUE,
         api_key TEXT NOT NULL UNIQUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		);`
@@ -36,10 +36,12 @@ func createTables() {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         game_id INTEGER NOT NULL,
         player_name TEXT NOT NULL,
+				player_id TEXT NOT NULL,
         score INTEGER NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+				updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (game_id) REFERENCES games(id),
-        UNIQUE(game_id, player_name, score)
+        UNIQUE(game_id, player_id)
     );`
 	scoreIndex := `
     CREATE INDEX IF NOT EXISTS idx_scores_game_score 
