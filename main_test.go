@@ -213,6 +213,9 @@ func TestLeaderboard(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
 	}
+	if got := rec.Header().Get("X-Total-Count"); got != "2" {
+		t.Errorf("expected X-Total-Count 2, got %q", got)
+	}
 	var entries []LeaderboardEntry
 	if err := json.Unmarshal(rec.Body.Bytes(), &entries); err != nil {
 		t.Fatalf("failed to decode: %v", err)
@@ -228,6 +231,37 @@ func TestLeaderboard(t *testing.T) {
 	}
 	if entries[0].Rank != 1 || entries[1].Rank != 2 {
 		t.Errorf("unexpected ranks: %d, %d", entries[0].Rank, entries[1].Rank)
+	}
+}
+
+func TestLeaderboardPagination(t *testing.T) {
+	setupDB()
+	game := seedGame(t)
+
+	submitScoreReq(t, game, uuid.New().String(), "Alice", 100)
+	submitScoreReq(t, game, uuid.New().String(), "Bob", 200)
+	submitScoreReq(t, game, uuid.New().String(), "Carol", 300)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/leaderboard/"+strconv.FormatInt(game.ID, 10)+"?limit=2&offset=1", nil)
+	req.SetPathValue("gameID", strconv.FormatInt(game.ID, 10))
+	rec := httptest.NewRecorder()
+	leaderboardHandler(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if got := rec.Header().Get("X-Total-Count"); got != "3" {
+		t.Errorf("expected X-Total-Count 3, got %q", got)
+	}
+	var entries []LeaderboardEntry
+	if err := json.Unmarshal(rec.Body.Bytes(), &entries); err != nil {
+		t.Fatalf("failed to decode: %v", err)
+	}
+	if len(entries) != 2 {
+		t.Fatalf("expected 2 entries, got %d", len(entries))
+	}
+	if entries[0].PlayerName != "Bob" || entries[1].PlayerName != "Alice" {
+		t.Errorf("unexpected page: %+v, %+v", entries[0], entries[1])
 	}
 }
 
