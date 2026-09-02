@@ -28,9 +28,22 @@ type SubmitScoreRequest struct {
 	APIKey     string `json:"api_key"`
 }
 
+type SubmitScoreResponse struct {
+	Accepted       bool   `json:"accepted"`
+	Message        string `json:"message"`
+	CurrentBest    int64  `json:"current_best"`
+	SubmittedScore int64  `json:"submitted_score"`
+}
+
 type LeaderboardEntry struct {
 	PlayerName string    `json:"player_name"`
 	Score      int64     `json:"score"`
 	CreatedAt  time.Time `json:"created_at"`
 	Rank       int       `json:"rank"`
+}
+
+// config model
+
+type Config struct {
+	MaxScore int64 `json:"max_score"`
 }

@@ -74,6 +74,14 @@ func submitScore(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Negative score", http.StatusBadRequest)
 		return
 	}
+	var previousScore int64
+	// get previous best
+	row = db.QueryRow(
+		`SELECT score FROM scores WHERE game_id = ? AND player_id = ?`, gameID, req.PlayerID)
+	if err := row.Scan(&previousScore); err != nil {
+		// No previous score found
+		previousScore = 0
+	}
 
 	// valid
 	result, err := db.Exec(
@@ -93,20 +101,20 @@ func submitScore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scoreID, _ := result.LastInsertId()
+	var response SubmitScoreResponse
+	response = SubmitScoreResponse{Accepted: true, SubmittedScore: req.Score, CurrentBest: previousScore}
 	rowsAffected, _ := result.RowsAffected()
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	message := "Score submitted"
 	if rowsAffected == 0 {
-		message = "Higher score already exists"
+		response.Accepted = false
+		response.Message = "Higher score already exists"
+	} else {
+		response.Message = "Score accepted"
 	}
 
-	json.NewEncoder(w).Encode(map[string]any{
-		"id":      scoreID,
-		"message": message,
-	})
+	json.NewEncoder(w).Encode(response)
 }
 
 func leaderboardHandler(w http.ResponseWriter, r *http.Request) {

@@ -27,7 +27,7 @@ func main() {
 	defer db.Close()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /api/scores/{gameID}", submitScore)
+	mux.Handle("POST /api/scores/{gameID}", rateLimit(http.HandlerFunc(submitScore)))
 	mux.HandleFunc("GET /api/leaderboard/{gameID}", leaderboardHandler)
 	mux.HandleFunc("GET /api/leaderboard/{gameID}/{userID}", getUserScore)
 	mux.HandleFunc("POST /api/games", addGame)
