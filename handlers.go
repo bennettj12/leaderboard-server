@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 	"uuid"
 )
@@ -124,14 +125,37 @@ func leaderboardHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	limit, offset := 10, 0
+
+	q := r.URL.Query()
+	if v := q.Get("limit"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 {
+			http.Error(w, "invalid limit", http.StatusBadRequest)
+			return
+		}
+		limit = n
+		if limit > 100 {
+			limit = 100
+		}
+	}
+	if v := q.Get("offset"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			http.Error(w, "invalid offset", http.StatusBadRequest)
+			return
+		}
+		offset = n
+	}
+
 	rows, err := db.Query(`
 	SELECT player_name, score, created_at,
 		RANK() OVER (ORDER BY score DESC) as rank
 	FROM scores
 	WHERE game_id = ?
-	ORDER BY score DESC
-	LIMIT 10`,
-		gameID,
+	ORDER BY score DESC player_id ASC
+	LIMIT ? OFFSET ?`,
+		gameID, limit, offset,
 	)
 
 	if err != nil {
