@@ -1,22 +1,21 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 
 	"github.com/joho/godotenv"
 )
 
-var port int64
-var config Config
+var LDBConfig Config
 
 func main() {
 
 	loadEnv()
-	loadConfig()
+	LDBConfig = loadConfig()
 
 	log.Println("Starting server...")
 	initDB(false)
@@ -28,7 +27,7 @@ func main() {
 	mux.HandleFunc("GET /api/leaderboard/{gameID}/{userID}", getUserScore)
 	mux.HandleFunc("POST /api/games", addGame)
 	mux.HandleFunc("GET /api/games", getGames)
-	addr := fmt.Sprintf(":%d", port)
+	addr := fmt.Sprintf(":%d", LDBConfig.Port)
 	log.Printf("Server starting on %s", addr)
 	log.Fatal(http.ListenAndServe(addr, mux))
 
@@ -41,15 +40,18 @@ func loadEnv() {
 	} else {
 		log.Println(".ENV Loaded:", os.Getenv("ENVLOADED"))
 	}
-	var err error
-	port, err = strconv.ParseInt(os.Getenv("PORT"), 10, 0)
-	if err != nil {
-		log.Fatal("No port set in .env", err)
-		return
-	}
 }
-func loadConfig() {
-	// load config
+func loadConfig() Config {
 	var config Config
+	// load config
+	data, err := os.ReadFile("config.json")
+	if err != nil {
+		log.Fatal("Missing config.json", err)
+	}
 
+	err = json.Unmarshal(data, &config)
+	if err != nil {
+		log.Fatal("Error parsing config.json", err)
+	}
+	return config
 }

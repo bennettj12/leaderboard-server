@@ -48,7 +48,7 @@ func rateLimit(n http.Handler) http.Handler {
 			}
 			// exists
 			val.count += 1
-			if val.count > 30 {
+			if val.count > LDBConfig.MaxRequests {
 				http.Error(w, "rate limited", http.StatusTooManyRequests)
 				return
 			}

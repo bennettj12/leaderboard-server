@@ -1,6 +1,9 @@
 package main
 
-import "time"
+import (
+	"time"
+	"uuid"
+)
 
 // Data model
 type Game struct {
@@ -28,6 +31,23 @@ type SubmitScoreRequest struct {
 	APIKey     string `json:"api_key"`
 }
 
+func (s *SubmitScoreRequest) isValid() bool {
+	switch {
+	case s.Score > LDBConfig.MaxScore:
+		return false
+	case s.Score < 0:
+		return false
+	case s.PlayerName == "":
+		return false
+	case len(s.PlayerName) > int(LDBConfig.MaxNameLength):
+		return false
+	}
+	if _, err := uuid.Parse(s.PlayerID); err != nil {
+		return false
+	}
+	return true
+}
+
 type SubmitScoreResponse struct {
 	Accepted       bool   `json:"accepted"`
 	Message        string `json:"message"`
@@ -45,6 +65,8 @@ type LeaderboardEntry struct {
 // config model
 
 type Config struct {
-	MaxScore    int64 `json:"max_score"`
-	MaxRequests uint  `json:"max_requests"`
+	MaxScore      int64 `json:"max_score"`
+	MaxRequests   uint  `json:"max_requests"`
+	Port          int64 `json:"port"`
+	MaxNameLength uint  `json:"max_name_length"`
 }

@@ -60,20 +60,11 @@ func submitScore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// some input validation
-	switch {
-	case req.PlayerName == "":
-		http.Error(w, "Missing player name", http.StatusBadRequest)
-		return
-	case len(req.PlayerName) > 24:
-		http.Error(w, "Name too long (max 24 characters)", http.StatusBadRequest)
-		return
-	case req.PlayerID == "":
-		http.Error(w, "Missing player name", http.StatusBadRequest)
-		return
-	case req.Score < 0:
-		http.Error(w, "Negative score", http.StatusBadRequest)
+	if req.isValid() == false {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
+
 	var previousScore int64
 	// get previous best
 	row = db.QueryRow(
