@@ -38,7 +38,16 @@ func main() {
 
 	go startRateLimitCleanup(time.Minute) // clear expired rate limits
 
-	log.Fatal(http.ListenAndServe(addr, mux))
+	server := &http.Server{
+		Addr:              addr,
+		Handler:           mux,
+		ReadHeaderTimeout: 2 * time.Second,
+		ReadTimeout:       5 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       30 * time.Second,
+	}
+
+	log.Fatal(server.ListenAndServe())
 }
 
 func loadEnv() {
