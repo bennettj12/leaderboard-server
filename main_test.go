@@ -1,36 +1,39 @@
 package main
 
 import (
-	"fmt"
-	"math"
-	"math/rand"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"strings"
 	"testing"
 )
 
-type vec2 struct {
-	x, y int
-}
+func TestCreateGame(t *testing.T) {
+	setupDB()
+	body := `{"name":"New Game"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/games", strings.NewReader(body))
+	req.Header.Set("content-type", "application/json")
 
-func clampf(val float64, min float64, max float64) float64 {
-	if val > min {
-		if val < max {
-			return val
-		}
-		return max
-	} else {
-		return min
+	rec := httptest.NewRecorder()
+	addGame(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("should respond with 201, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var game Game
+	json.Unmarshal(rec.Body.Bytes(), &game)
+
+	switch {
+	case game.Name != "New Game":
+		t.Errorf("incorrect game name: %q", game.Name)
+	case game.ID == 0:
+		t.Errorf("expected an id, got zero")
+	case game.APIKey == "":
+		t.Errorf("missing API Key")
 	}
 }
-func randVec2() vec2 {
-	return vec2{rand.Intn(10), rand.Intn(10)}
-}
-func TestMain(t *testing.T) {
-	random := rand.Intn(32)
-	if random > 32 {
-		t.Error("Intn higher than max")
-	}
-	fmt.Println("R:	", random)
-	fmt.Println("PI:	", math.Pi)
-	fmt.Println("RV:	", randVec2())
-
+func setupDB() {
+	os.Remove("./" + os.Getenv("TEST_DB_NAME") + ".db")
+	initDB(true)
 }

@@ -23,13 +23,13 @@ func main() {
 		return
 	}
 	log.Println("Starting server...")
-	initDB()
+	initDB(false)
 	defer db.Close()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/scores/{gameID}", submitScore)
-	mux.HandleFunc("GET /api/scores/{gameID}", getScores)
 	mux.HandleFunc("GET /api/leaderboard/{gameID}", leaderboardHandler)
+	mux.HandleFunc("GET /api/leaderboard/{gameID}/{userID}", getUserScore)
 	mux.HandleFunc("POST /api/games", addGame)
 	mux.HandleFunc("GET /api/games", getGames)
 	addr := fmt.Sprintf(":%d", port)

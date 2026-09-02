@@ -3,15 +3,22 @@ package main
 import (
 	"database/sql"
 	"log"
+	"os"
 
 	_ "modernc.org/sqlite"
 )
 
 var db *sql.DB
 
-func initDB() {
+func initDB(testDatabase bool) {
 	var err error
-	db, err = sql.Open("sqlite", "./leaderboard.db")
+
+	dbName := os.Getenv("DB_NAME")
+	if testDatabase {
+		dbName = os.Getenv("TEST_DB_NAME")
+	}
+
+	db, err = sql.Open("sqlite", "./"+dbName+".db")
 	if err != nil {
 		log.Fatal("Failed to open db.", err)
 	}

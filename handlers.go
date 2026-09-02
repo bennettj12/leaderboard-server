@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -8,9 +9,32 @@ import (
 	"uuid"
 )
 
-func getScores(w http.ResponseWriter, r *http.Request) {
-	//TODO: Implement
-	http.Error(w, "Unimplemented", http.StatusNotImplemented)
+// GET /api/leaderboard/{gameID}/{userID}
+func getUserScore(w http.ResponseWriter, r *http.Request) {
+	gameID := r.PathValue("gameID")
+	userID := r.PathValue("userID")
+
+	var ldb LeaderboardEntry
+
+	rowScore := db.QueryRow(`
+		SELECT player_name, score, created_at,
+			(SELECT COUNT(*) + 1 FROM scores s2
+			WHERE s2.game_id = s1.game_id AND s2.score > s1.score) AS rank
+		FROM scores s1
+		WHERE s1.game_id = ? AND s1.player_id = ?`, gameID, userID)
+
+	if err := rowScore.Scan(&ldb.PlayerName, &ldb.Score, &ldb.CreatedAt, &ldb.Rank); err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Failed to find score", http.StatusNotFound)
+		} else {
+			log.Println(err)
+			http.Error(w, "Error scanning database", http.StatusInternalServerError)
+		}
+		return
+	}
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(ldb)
 }
 
 func submitScore(w http.ResponseWriter, r *http.Request) {
@@ -42,6 +66,7 @@ func submitScore(w http.ResponseWriter, r *http.Request) {
 		return
 	case len(req.PlayerName) > 24:
 		http.Error(w, "Name too long (max 24 characters)", http.StatusBadRequest)
+		return
 	case req.PlayerID == "":
 		http.Error(w, "Missing player name", http.StatusBadRequest)
 		return
