@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -25,7 +28,6 @@ func main() {
 
 	log.Println("Starting server...")
 	initDB(false)
-	defer db.Close()
 
 	mux := http.NewServeMux()
 	mux.Handle("POST /api/scores/{gameID}", rateLimit(http.HandlerFunc(submitScore)))
@@ -34,9 +36,6 @@ func main() {
 	mux.Handle("POST /api/games", requireAdmin(http.HandlerFunc(addGame)))
 	mux.Handle("GET /api/games", requireAdmin(http.HandlerFunc(getGames)))
 	addr := fmt.Sprintf(":%d", LDBConfig.Port)
-	log.Printf("Server starting on %s", addr)
-
-	go startRateLimitCleanup(time.Minute) // clear expired rate limits
 
 	server := &http.Server{
 		Addr:              addr,
@@ -47,7 +46,35 @@ func main() {
 		IdleTimeout:       30 * time.Second,
 	}
 
-	log.Fatal(server.ListenAndServe())
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	go startRateLimitCleanup(ctx, time.Minute) // clear expired rate limits
+	serverErr := make(chan error, 1)
+	go func() {
+		log.Printf("Server starting on %s", addr)
+		serverErr <- server.ListenAndServe()
+	}()
+
+	select {
+	case err := <-serverErr:
+		log.Fatalf("server error: %v", err)
+	case <-ctx.Done():
+		log.Println("shutdown signal received")
+	}
+	// select passed : shutting down
+	// wait a bit
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Printf("shutdown incomplete: %v", err)
+	}
+
+	if err := db.Close(); err != nil {
+		log.Printf("error closing database: %v", err)
+	}
+	log.Println("Shutdown complete.")
+
 }
 
 func loadEnv() {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -70,20 +71,24 @@ func rateLimit(n http.Handler) http.Handler {
 	})
 }
 
-func startRateLimitCleanup(interval time.Duration) {
+func startRateLimitCleanup(ctx context.Context, interval time.Duration) {
 	go func() {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 
-		for range ticker.C {
-			mu.Lock()
-			for id, w := range users {
-				if time.Since(w.start) >= time.Minute {
-					delete(users, id)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				mu.Lock()
+				for id, w := range users {
+					if time.Since(w.start) >= time.Minute {
+						delete(users, id)
+					}
 				}
+				mu.Unlock()
 			}
-			mu.Unlock()
 		}
-
 	}()
 }
