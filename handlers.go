@@ -183,5 +183,30 @@ func addGame(w http.ResponseWriter, r *http.Request) {
 
 }
 func getGames(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
+	rows, err := db.Query(`SELECT id, name, api_key, created_at FROM games ORDER BY id`)
+	if err != nil {
+		log.Print(err)
+		http.Error(w, "failed to fetch games", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	games := []Game{}
+	for rows.Next() {
+		var game Game
+		if err := rows.Scan(&game.ID, &game.Name, &game.APIKey, &game.CreatedAt); err != nil {
+			log.Print(err)
+			http.Error(w, "failed to parse games", http.StatusInternalServerError)
+			return
+		}
+		games = append(games, game)
+	}
+	if err := rows.Err(); err != nil {
+		log.Print(err)
+		http.Error(w, "failed to read games", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("content-type", "application/json")
+	json.NewEncoder(w).Encode(games)
 }
