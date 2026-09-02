@@ -11,11 +11,16 @@ import (
 )
 
 var LDBConfig Config
+var adminKey string
 
 func main() {
 
 	loadEnv()
 	LDBConfig = loadConfig()
+	adminKey = os.Getenv("ADMIN_KEY")
+	if adminKey == "" {
+		log.Fatal("ADMIN_KEY not set in .env")
+	}
 
 	log.Println("Starting server...")
 	initDB(false)
@@ -25,8 +30,8 @@ func main() {
 	mux.Handle("POST /api/scores/{gameID}", rateLimit(http.HandlerFunc(submitScore)))
 	mux.HandleFunc("GET /api/leaderboard/{gameID}", leaderboardHandler)
 	mux.HandleFunc("GET /api/leaderboard/{gameID}/{userID}", getUserScore)
-	mux.HandleFunc("POST /api/games", addGame)
-	mux.HandleFunc("GET /api/games", getGames)
+	mux.Handle("POST /api/games", requireAdmin(http.HandlerFunc(addGame)))
+	mux.Handle("GET /api/games", requireAdmin(http.HandlerFunc(getGames)))
 	addr := fmt.Sprintf(":%d", LDBConfig.Port)
 	log.Printf("Server starting on %s", addr)
 	log.Fatal(http.ListenAndServe(addr, mux))
