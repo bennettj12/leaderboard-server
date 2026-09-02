@@ -1,0 +1,5 @@
+{
+	"max_score": 10000000,
+	"max_requests": 30,
+	"port": 8000
+}

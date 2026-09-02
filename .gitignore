@@ -2,3 +2,5 @@
 *.db
 *.exe
 *.log
+
+config.json

@@ -45,5 +45,6 @@ type LeaderboardEntry struct {
 // config model
 
 type Config struct {
-	MaxScore int64 `json:"max_score"`
+	MaxScore    int64 `json:"max_score"`
+	MaxRequests uint  `json:"max_requests"`
 }

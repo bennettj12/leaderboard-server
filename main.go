@@ -10,18 +10,14 @@ import (
 	"github.com/joho/godotenv"
 )
 
+var port int64
+var config Config
+
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Failed loading .env", err)
-		return
-	} else {
-		log.Println(".ENV Loaded:", os.Getenv("ENVLOADED"))
-	}
-	var port, err = strconv.ParseInt(os.Getenv("PORT"), 10, 0)
-	if err != nil {
-		log.Fatal("No port set in .env", err)
-		return
-	}
+
+	loadEnv()
+	loadConfig()
+
 	log.Println("Starting server...")
 	initDB(false)
 	defer db.Close()
@@ -35,5 +31,25 @@ func main() {
 	addr := fmt.Sprintf(":%d", port)
 	log.Printf("Server starting on %s", addr)
 	log.Fatal(http.ListenAndServe(addr, mux))
+
+}
+
+func loadEnv() {
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Failed loading .env", err)
+		return
+	} else {
+		log.Println(".ENV Loaded:", os.Getenv("ENVLOADED"))
+	}
+	var err error
+	port, err = strconv.ParseInt(os.Getenv("PORT"), 10, 0)
+	if err != nil {
+		log.Fatal("No port set in .env", err)
+		return
+	}
+}
+func loadConfig() {
+	// load config
+	var config Config
 
 }
