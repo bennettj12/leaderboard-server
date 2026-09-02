@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -35,6 +36,8 @@ func main() {
 	addr := fmt.Sprintf(":%d", LDBConfig.Port)
 	log.Printf("Server starting on %s", addr)
 	log.Fatal(http.ListenAndServe(addr, mux))
+
+	go startRateLimitCleanup(time.Minute) // clear expired rate limits
 
 }
 

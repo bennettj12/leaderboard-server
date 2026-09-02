@@ -61,3 +61,21 @@ func rateLimit(n http.Handler) http.Handler {
 
 	})
 }
+
+func startRateLimitCleanup(interval time.Duration) {
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			mu.Lock()
+			for id, w := range users {
+				if time.Since(w.start) >= time.Minute {
+					delete(users, id)
+				}
+			}
+			mu.Unlock()
+		}
+
+	}()
+}
