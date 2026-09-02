@@ -2,5 +2,6 @@
 	"max_score": 10000000,
 	"max_requests": 30,
 	"max_name_length": 24,
-	"port": 8000
+	"port": 8000,
+	"max_body_size": 1048576
 }

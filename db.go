@@ -18,7 +18,7 @@ func initDB(testDatabase bool) {
 		dbName = os.Getenv("TEST_DB_NAME")
 	}
 
-	db, err = sql.Open("sqlite", "./"+dbName+".db")
+	db, err = sql.Open("sqlite", "./"+dbName+".db?_journal_mode=WAL&_busy_timeout=5000")
 	if err != nil {
 		log.Fatal("Failed to open db.", err)
 	}

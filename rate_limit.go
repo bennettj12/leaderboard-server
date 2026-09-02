@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"sync"
@@ -26,9 +27,16 @@ checks for rate limits and then executes the handler
 */
 func rateLimit(n http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(w, r.Body, LDBConfig.MaxBodySize)
 		// get and restore body
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
+
+			if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
+				http.Error(w, "request body too large", http.StatusRequestEntityTooLarge)
+				return
+			}
+
 			http.Error(w, "failed read", http.StatusInternalServerError)
 			return
 		}

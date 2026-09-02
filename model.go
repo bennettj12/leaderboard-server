@@ -68,4 +68,5 @@ type Config struct {
 	MaxRequests   uint  `json:"max_requests"`
 	Port          int64 `json:"port"`
 	MaxNameLength uint  `json:"max_name_length"`
+	MaxBodySize   int64 `json:"max_body_size"`
 }

@@ -35,10 +35,10 @@ func main() {
 	mux.Handle("GET /api/games", requireAdmin(http.HandlerFunc(getGames)))
 	addr := fmt.Sprintf(":%d", LDBConfig.Port)
 	log.Printf("Server starting on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, mux))
 
 	go startRateLimitCleanup(time.Minute) // clear expired rate limits
 
+	log.Fatal(http.ListenAndServe(addr, mux))
 }
 
 func loadEnv() {

@@ -10,8 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/joho/godotenv"
 	"uuid"
+
+	"github.com/joho/godotenv"
 )
 
 func TestMain(m *testing.M) {
@@ -25,6 +26,7 @@ func TestMain(m *testing.M) {
 		MaxRequests:   30,
 		Port:          8000,
 		MaxNameLength: 24,
+		MaxBodySize:   1048576,
 	}
 	os.Exit(m.Run())
 }
