@@ -141,11 +141,17 @@ func leaderboardHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if v := q.Get("offset"); v != "" {
 		n, err := strconv.Atoi(v)
-		if err != nil {
+		if err != nil || n < 0 {
 			http.Error(w, "invalid offset", http.StatusBadRequest)
 			return
 		}
 		offset = n
+	}
+
+	var total int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM scores WHERE game_id = ?`, gameID).Scan(&total); err != nil {
+		http.Error(w, "failed to count leaderboard", http.StatusInternalServerError)
+		return
 	}
 
 	rows, err := db.Query(`
@@ -153,7 +159,7 @@ func leaderboardHandler(w http.ResponseWriter, r *http.Request) {
 		RANK() OVER (ORDER BY score DESC) as rank
 	FROM scores
 	WHERE game_id = ?
-	ORDER BY score DESC player_id ASC
+	ORDER BY score DESC, player_id ASC
 	LIMIT ? OFFSET ?`,
 		gameID, limit, offset,
 	)
@@ -177,6 +183,7 @@ func leaderboardHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("content-type", "application/json")
+	w.Header().Set("X-Total-Count", strconv.Itoa(total))
 	json.NewEncoder(w).Encode(entries)
 }
 func addGame(w http.ResponseWriter, r *http.Request) {
