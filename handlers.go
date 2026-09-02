@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/subtle"
 	"database/sql"
 	"encoding/json"
 	"log"
@@ -45,6 +46,12 @@ func submitScore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	apiKey := r.Header.Get("X-API-Key")
+	if apiKey == "" {
+		http.Error(w, "Missing API key", http.StatusUnauthorized)
+		return
+	}
+
 	gameID := r.PathValue("gameID")
 	// make sure it exists
 	var game Game
@@ -55,8 +62,8 @@ func submitScore(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to parse game information", http.StatusInternalServerError)
 		return
 	}
-	if game.APIKey != req.APIKey {
-		http.Error(w, "Invalid API Key", http.StatusUnauthorized)
+	if subtle.ConstantTimeCompare([]byte(game.APIKey), []byte(apiKey)) != 1 {
+		http.Error(w, "Invalid API key", http.StatusUnauthorized)
 		return
 	}
 	// some input validation

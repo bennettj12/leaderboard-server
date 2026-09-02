@@ -39,9 +39,7 @@ func rateLimit(n http.Handler) http.Handler {
 			http.Error(w, "request missing ID", http.StatusBadRequest)
 			return
 		}
-
 		mu.Lock()
-		defer mu.Unlock()
 		if val, ok := users[req.PlayerID]; ok {
 			if diff := time.Since(val.start); diff >= time.Minute {
 				val = requestMinute{0, time.Now()}
@@ -50,6 +48,7 @@ func rateLimit(n http.Handler) http.Handler {
 			val.count += 1
 			if val.count > LDBConfig.MaxRequests {
 				http.Error(w, "rate limited", http.StatusTooManyRequests)
+				mu.Unlock()
 				return
 			}
 			users[req.PlayerID] = val
@@ -57,7 +56,7 @@ func rateLimit(n http.Handler) http.Handler {
 			// does not exist
 			users[req.PlayerID] = requestMinute{1, time.Now()}
 		}
-
+		mu.Unlock()
 		n.ServeHTTP(w, r)
 
 	})

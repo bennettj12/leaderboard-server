@@ -28,7 +28,6 @@ type SubmitScoreRequest struct {
 	PlayerName string `json:"player_name"`
 	PlayerID   string `json:"player_id"`
 	Score      int64  `json:"score"`
-	APIKey     string `json:"api_key"`
 }
 
 func (s *SubmitScoreRequest) isValid() bool {
