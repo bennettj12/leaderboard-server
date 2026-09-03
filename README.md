@@ -153,7 +153,7 @@ Only the player's **best** score is kept: submitting a lower score for an existi
 
 `current_best` is the player's best score *before* this submission (`0` if they had none). When a higher score already exists: `accepted: false`, `message: "Higher score already exists"`.
 
-**Errors:** `400` invalid JSON / invalid request (bad UUID, empty name, score out of range) · `401` missing or wrong `X-API-Key` · `413` body too large · `429` rate limited · `500` save failure.
+**Errors:** `400` invalid JSON / invalid request (bad UUID, empty name, score out of range) · `401` missing or wrong `X-API-Key` · `404` game not found · `413` body too large · `429` rate limited · `500` save failure.
 
 ```bash
 curl -X POST https://leaderboard.bennett.click/api/scores/1 \
@@ -162,7 +162,7 @@ curl -X POST https://leaderboard.bennett.click/api/scores/1 \
   -d '{"player_id":"550e8400-e29b-41d4-a716-446655440000","player_name":"Alice","score":12345}'
 ```
 
-> Note: submitting to a `gameID` that doesn't exist currently returns `500` (not `404`). Create the game first.
+> Note: submitting to a `gameID` that doesn't exist returns `404`. Create the game first.
 
 ---
 
