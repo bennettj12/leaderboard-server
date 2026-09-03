@@ -128,7 +128,8 @@ Content-Type: application/json
 {
   "player_id": "550e8400-e29b-41d4-a716-446655440000",
   "player_name": "Alice",
-  "score": 12345
+  "score": 12345,
+  "hash": "80531df864ab6b986c29c12314a8a50dce9eae8060449dab94b1cdb66c83eb45"
 }
 ```
 
@@ -137,6 +138,7 @@ Content-Type: application/json
 | `player_id` | Required. Must be a valid UUID. **This is the rate-limit key.** |
 | `player_name` | Required. Non-empty, ≤ `max_name_length` (24 by default). |
 | `score` | Required. `0 ≤ score ≤ max_score` (10,000,000 by default). |
+| `hash` | Required. Hex SHA-256 integrity hash — see [Score integrity hash](#score-integrity-hash). |
 
 Only the player's **best** score is kept: submitting a lower score for an existing `player_id` is accepted as a no-op with `accepted: false`.
 
@@ -159,10 +161,35 @@ Only the player's **best** score is kept: submitting a lower score for an existi
 curl -X POST https://leaderboard.bennett.click/api/scores/1 \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $GAME_API_KEY" \
-  -d '{"player_id":"550e8400-e29b-41d4-a716-446655440000","player_name":"Alice","score":12345}'
+  -d '{"player_id":"550e8400-e29b-41d4-a716-446655440000","player_name":"Alice","score":12345,"hash":"<computed hash>"}'
 ```
 
 > Note: submitting to a `gameID` that doesn't exist returns `404`. Create the game first.
+
+#### Score integrity hash
+
+Every score submission must include a `hash` that proves the request wasn't tampered with. The server recomputes the hash from the received fields and rejects the request (`400`) if it doesn't match.
+
+**Formula** (lowercase hex, `|`-separated, no spaces):
+
+```
+hash = sha256( player_name | player_id | score | api_key )
+```
+
+Where:
+
+- `score` is the plain decimal integer — `12345`
+- `api_key` is the **same** game API key sent in the `X-API-Key` header.
+- Field order and separators are fixed — clients must reproduce the input byte-for-byte.
+
+**Worked example.** For `player_name="Alice"`, `player_id="550e8400-e29b-41d4-a716-446655440000"`, `score=12345`, `api_key="8f14e45f-ceea-4673-b9e2-8d9b3e1a2c4d"`:
+
+```
+input  = Alice|550e8400-e29b-41d4-a716-446655440000|12345|8f14e45f-ceea-4673-b9e2-8d9b3e1a2c4d
+hash   = 80531df864ab6b986c29c12314a8a50dce9eae8060449dab94b1cdb66c83eb45
+```
+
+> The hash deters casual cheating (packet sniffing alone can't forge a new score) but is **not** cryptographic authentication — the inputs are all client-known, so a determined attacker who extracts the client logic can still forge submissions. It's a deterrent, not a guarantee.
 
 ---
 

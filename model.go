@@ -1,6 +1,9 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"time"
 	"uuid"
 )
@@ -28,9 +31,10 @@ type SubmitScoreRequest struct {
 	PlayerName string `json:"player_name"`
 	PlayerID   string `json:"player_id"`
 	Score      int64  `json:"score"`
+	Hash       string `json:"hash"`
 }
 
-func (s *SubmitScoreRequest) isValid() bool {
+func (s *SubmitScoreRequest) isValid(apiKey string) bool {
 	switch {
 	case s.Score > LDBConfig.MaxScore:
 		return false
@@ -44,6 +48,14 @@ func (s *SubmitScoreRequest) isValid() bool {
 	if _, err := uuid.Parse(s.PlayerID); err != nil {
 		return false
 	}
+	// compute hash
+	// s.PlayerName + s.PlayerID + fmt.Sprint(s.Score) + apiKey
+	hashBytes := sha256.Sum256(fmt.Appendf(nil, "%s|%s|%d|%s", s.PlayerName, s.PlayerID, s.Score, apiKey))
+	hashString := hex.EncodeToString(hashBytes[:])
+	if hashString != s.Hash {
+		return false
+	}
+
 	return true
 }
 

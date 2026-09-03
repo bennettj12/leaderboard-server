@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -129,10 +131,19 @@ func TestGetGamesEmpty(t *testing.T) {
 	}
 }
 
+// scoreHash computes the client-side integrity hash:
+// hex sha256 of "player_name|player_id|score|api_key".
+// This mirrors what a game client must compute for the "hash" field.
+func scoreHash(name, playerID string, score int64, apiKey string) string {
+	sum := sha256.Sum256([]byte(fmt.Sprintf("%s|%s|%d|%s", name, playerID, score, apiKey)))
+	return hex.EncodeToString(sum[:])
+}
+
 // submitScoreReq submits a score through the handler and returns the recorder.
 func submitScoreReq(t *testing.T, game Game, playerID, name string, score int64) *httptest.ResponseRecorder {
 	t.Helper()
-	body := fmt.Sprintf(`{"player_id":%q,"player_name":%q,"score":%d}`, playerID, name, score)
+	hash := scoreHash(name, playerID, score, game.APIKey)
+	body := fmt.Sprintf(`{"player_id":%q,"player_name":%q,"score":%d,"hash":%q}`, playerID, name, score, hash)
 	req := httptest.NewRequest(http.MethodPost, "/api/scores/"+strconv.FormatInt(game.ID, 10), strings.NewReader(body))
 	req.Header.Set("content-type", "application/json")
 	req.Header.Set("X-API-Key", game.APIKey)
@@ -197,6 +208,25 @@ func TestSubmitScoreMissingKey(t *testing.T) {
 
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestSubmitScoreBadHash(t *testing.T) {
+	setupDB()
+	game := seedGame(t)
+
+	body := fmt.Sprintf(`{"player_id":%q,"player_name":%q,"score":%d,"hash":%q}`,
+		uuid.New().String(), "Alice", 100, strings.Repeat("0", 64))
+	req := httptest.NewRequest(http.MethodPost, "/api/scores/"+strconv.FormatInt(game.ID, 10), strings.NewReader(body))
+	req.Header.Set("content-type", "application/json")
+	req.Header.Set("X-API-Key", game.APIKey)
+	req.SetPathValue("gameID", strconv.FormatInt(game.ID, 10))
+
+	rec := httptest.NewRecorder()
+	submitScore(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
 	}
 }
 

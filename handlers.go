@@ -72,7 +72,7 @@ func submitScore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// some input validation
-	if req.isValid() == false {
+	if req.isValid(game.APIKey) == false {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
