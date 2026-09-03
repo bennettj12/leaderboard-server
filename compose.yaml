@@ -1,7 +1,6 @@
 services:
   golangserver:
     build: .
-    image: golangserver:latest
     container_name: leaderboard
     restart: unless-stopped
     ports:
