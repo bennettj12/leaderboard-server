@@ -59,6 +59,10 @@ func submitScore(w http.ResponseWriter, r *http.Request) {
 	row := db.QueryRow(`SELECT * FROM games WHERE id = ?`, gameID)
 
 	if err := row.Scan(&game.ID, &game.Name, &game.APIKey, &game.CreatedAt); err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "game not found", http.StatusNotFound)
+			return
+		}
 		log.Print(err)
 		http.Error(w, "failed to parse game information", http.StatusInternalServerError)
 		return
