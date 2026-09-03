@@ -32,4 +32,6 @@ A simple  leaderboard server written in Go. Games register to get an API key, cl
 
 Example: input `Alice|550e8400-e29b-41d4-a716-446655440000|12345|8f14e45f-ceea-4673-b9e2-8d9b3e1a2c4d` → hash `80531df864ab6b986c29c12314a8a50dce9eae8060449dab94b1cdb66c83eb45`
 
+Code examples (Godot, JavaScript, Go): see [hash-examples.md](hash-examples.md).
+
 The hash makes cheating harder but will not prevent cheating entirely as long as the score submit requests are sent from player's game client to the server.
