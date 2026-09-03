@@ -1,16 +1,15 @@
-   services:                                                                                                        
-     golangserver:                                                                                                  
-       build: .                                                                                                     
-       image: golangserver:latest                                                                                   
-       container_name: leaderboard                                                                                  
-       restart: unless-stopped                                                                                      
-       ports:                                                                                                       
-         - "127.0.0.1:8000:8000"                                        
-       environment:                                                                                                 
-         ADMIN_KEY: ${ADMIN_KEY:?set ADMIN_KEY in .env or Portainer}                                                
-         DB_NAME: leaderboard                                                                                       
-       volumes:                                                                                                     
-         - leaderboard_data:/app                                                           
-         - ./config.json:/app/config.json:ro                                  
-   volumes:                                                                                                         
-     leaderboard_data:     
+services:
+  golangserver:
+    build: .
+    image: golangserver:latest
+    container_name: leaderboard
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      ADMIN_KEY: ${ADMIN_KEY:?set ADMIN_KEY in .env or Portainer}
+      DB_NAME: leaderboard
+    volumes:
+      - leaderboard_data:/app
+volumes:
+  leaderboard_data:
