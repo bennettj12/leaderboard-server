@@ -241,3 +241,7 @@ func getGames(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 	json.NewEncoder(w).Encode(games)
 }
+
+func healthz(w http.ResponseWriter, r *http.Request) {
+	// 200 0K
+}

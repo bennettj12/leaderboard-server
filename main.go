@@ -36,6 +36,9 @@ func main() {
 	mux.HandleFunc("GET /api/leaderboard/{gameID}/{userID}", getUserScore)
 	mux.Handle("POST /api/games", requireAdmin(http.HandlerFunc(addGame)))
 	mux.Handle("GET /api/games", requireAdmin(http.HandlerFunc(getGames)))
+
+	mux.HandleFunc("GET /healthz", healthz)
+
 	addr := fmt.Sprintf(":%d", LDBConfig.Port)
 
 	server := &http.Server{
