@@ -39,11 +39,14 @@ func main() {
 
 	mux.HandleFunc("GET /healthz", healthz)
 
+	// wrap everything in CORS so browser clients can call the API
+	handler := cors(mux)
+
 	addr := fmt.Sprintf(":%d", LDBConfig.Port)
 
 	server := &http.Server{
 		Addr:              addr,
-		Handler:           mux,
+		Handler:           handler,
 		ReadHeaderTimeout: 2 * time.Second,
 		ReadTimeout:       5 * time.Second,
 		WriteTimeout:      10 * time.Second,

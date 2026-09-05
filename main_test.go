@@ -135,7 +135,7 @@ func TestGetGamesEmpty(t *testing.T) {
 // hex sha256 of "player_name|player_id|score|api_key".
 // This mirrors what a game client must compute for the "hash" field.
 func scoreHash(name, playerID string, score int64, apiKey string) string {
-	sum := sha256.Sum256([]byte(fmt.Sprintf("%s|%s|%d|%s", name, playerID, score, apiKey)))
+	sum := sha256.Sum256(fmt.Appendf(nil, "%s|%s|%d|%s", name, playerID, score, apiKey))
 	return hex.EncodeToString(sum[:])
 }
 
