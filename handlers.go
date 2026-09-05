@@ -11,6 +11,33 @@ import (
 	"uuid"
 )
 
+// DELETE /api/leaderboard/{gameID}/{userID} (admin)
+func deleteUserScore(w http.ResponseWriter, r *http.Request) {
+	gameID := r.PathValue("gameID")
+	userID := r.PathValue("userID")
+
+	result, err := db.Exec(
+		`DELETE FROM scores WHERE game_id = ? AND player_id = ?`,
+		gameID, userID,
+	)
+	if err != nil {
+		log.Print(err)
+		http.Error(w, "Failed to delete score", http.StatusInternalServerError)
+		return
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Print(err)
+		http.Error(w, "Failed to read delete result", http.StatusInternalServerError)
+		return
+	}
+	if rowsAffected == 0 {
+		http.Error(w, "Score not found", http.StatusNotFound)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // GET /api/leaderboard/{gameID}/{userID}
 func getUserScore(w http.ResponseWriter, r *http.Request) {
 	gameID := r.PathValue("gameID")
@@ -190,6 +217,48 @@ func leaderboardHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Total-Count", strconv.Itoa(total))
 	json.NewEncoder(w).Encode(entries)
 }
+
+// GET /api/scores/{gameID} (admin) - every score for a game, including player_id,
+// so an admin can map a name on the leaderboard to the id they'd delete.
+func listScores(w http.ResponseWriter, r *http.Request) {
+	gameID := r.PathValue("gameID")
+	if gameID == "" {
+		http.Error(w, "missing game ID", http.StatusBadRequest)
+		return
+	}
+
+	rows, err := db.Query(`
+		SELECT player_name, player_id, score, created_at
+		FROM scores
+		WHERE game_id = ?
+		ORDER BY score DESC, player_id ASC`, gameID)
+	if err != nil {
+		log.Print(err)
+		http.Error(w, "failed to fetch scores", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	scores := []AdminScoreEntry{}
+	for rows.Next() {
+		var s AdminScoreEntry
+		if err := rows.Scan(&s.PlayerName, &s.PlayerID, &s.Score, &s.CreatedAt); err != nil {
+			log.Print(err)
+			http.Error(w, "failed to parse scores", http.StatusInternalServerError)
+			return
+		}
+		scores = append(scores, s)
+	}
+	if err := rows.Err(); err != nil {
+		log.Print(err)
+		http.Error(w, "failed to read scores", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("content-type", "application/json")
+	json.NewEncoder(w).Encode(scores)
+}
+
 func addGame(w http.ResponseWriter, r *http.Request) {
 	var game Game
 	if err := json.NewDecoder(r.Body).Decode(&game); err != nil {

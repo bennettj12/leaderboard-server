@@ -73,6 +73,15 @@ type LeaderboardEntry struct {
 	Rank       int       `json:"rank"`
 }
 
+// AdminScoreEntry is LeaderboardEntry plus player_id. player_id is deliberately
+// kept out of the public leaderboard response; only admin endpoint uses this.
+type AdminScoreEntry struct {
+	PlayerName string    `json:"player_name"`
+	PlayerID   string    `json:"player_id"`
+	Score      int64     `json:"score"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
 // config model
 
 type Config struct {

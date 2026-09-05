@@ -34,6 +34,8 @@ func main() {
 	mux.Handle("POST /api/scores/{gameID}", rateLimit(http.HandlerFunc(submitScore)))
 	mux.HandleFunc("GET /api/leaderboard/{gameID}", leaderboardHandler)
 	mux.HandleFunc("GET /api/leaderboard/{gameID}/{userID}", getUserScore)
+	mux.Handle("DELETE /api/leaderboard/{gameID}/{userID}", requireAdmin(http.HandlerFunc(deleteUserScore)))
+	mux.Handle("GET /api/scores/{gameID}", requireAdmin(http.HandlerFunc(listScores)))
 	mux.Handle("POST /api/games", requireAdmin(http.HandlerFunc(addGame)))
 	mux.Handle("GET /api/games", requireAdmin(http.HandlerFunc(getGames)))
 
