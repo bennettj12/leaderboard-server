@@ -2,7 +2,7 @@
 
 A simple  leaderboard server written in Go. Games register to get an API key, clients submit scores, anyone can read leaderboards.
 
-**Live:** https://leaderboard.bennett.click
+**Live:** [https://leaderboard.bennett.click](https://leaderboard.bennett.click/api/leaderboard/2)
 
 ## Authentication
 
