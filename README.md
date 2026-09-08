@@ -3,6 +3,7 @@
 A simple  leaderboard server written in Go. Games register to get an API key, clients submit scores, anyone can read leaderboards.
 
 **Live:** [Leaderboard for 'A Game About Shooting Rocks'](https://leaderboard.bennett.click/api/leaderboard/2)
+
 Game Link: [A Game About Shooting Rocks](https://bigghead.itch.io/rock-shooting-game)
 
 ## Authentication
